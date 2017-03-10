@@ -10,8 +10,6 @@ var User = require('../models/user.js');
 // router.get('/nswbmw', function(req, res) {
 //     res.send("hello,world!");
 // });
-
-// module.exports = function(app) {
 // 正式搭建多人博客
 // 
 
@@ -124,8 +122,5 @@ router.get('/logout', function(req, res) {
     req.flash('success','登出成功！');
     res.redirect('/');
 });
-
-// };
-
 
 module.exports = router;
