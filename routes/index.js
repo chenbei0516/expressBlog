@@ -3,6 +3,7 @@ var router = express.Router();
 var crypto = require('crypto');
 var User = require('../models/user.js');
 var Post = require('../models/post.js');
+// var multer = require('multer');
 /* GET home page. */
 // router.get('/', function(req, res, next) {
 //     res.render('index', { title: 'Express' });
@@ -152,6 +153,43 @@ router.get('/logout', function(req, res) {
     req.flash('success', '登出成功！');
     res.redirect('/');
 });
+
+
+/*var storage = multer.diskStorage({
+    destination: function(req, file, callback) {
+        callback(null, './public/images');
+    },
+    filename: function(req, file, callback) {
+        callback(null, file.originalname);
+    }
+});
+
+var upload = multer({
+    storage: storage
+});*/
+// var cpUpload = upload.any();
+
+router.get('/upload', checkLogin);
+router.get('/upload', function(req, res) {
+    res.render('upload', {
+        title: "文件上传",
+        user: req.session.user,
+        success: req.flash('success').toString(),
+        error: req.flash('error').toString()
+    });
+});
+
+router.post('/upload', checkLogin);
+/*router.post('/upload', upload.array('field1',5),function(req, res) {
+    req.flash('success', '文件上传成功！');
+    res.redirect('/upload');
+});*/
+router.post('/upload',function(req, res) {
+    req.flash('success', '文件上传成功！');
+    res.redirect('/upload');
+});
+
+
 
 function checkLogin(req, res, next) {
     if (!req.session.user) {

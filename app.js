@@ -8,7 +8,7 @@ var bodyParser = require('body-parser');
 var session = require('express-session');
 var flash = require('connect-flash');
 var MongoStore = require('connect-mongo')(session);
-
+var multer = require('multer');
 
 var settings = require('./settings');
 var index = require('./routes/index');
@@ -38,16 +38,34 @@ app.use(flash());
 app.use(session({
     secret: settings.cookieSecret,
     key: settings.db,
-    resave:true,
+    resave: true,
     saveUninitialized: false,
     cookie: { maxAge: 1000 * 60 * 60 * 24 * 30 },
     store: new MongoStore({
         db: settings.db,
         host: settings.host,
         port: settings.port,
-        url:settings.mongodb
+        url: settings.mongodb
     })
 }));
+
+
+
+var storage = multer.diskStorage({
+    destination: function(req, file, callback) {
+        callback(null, './public/images');
+    },
+    filename: function(req, file, callback) {
+        callback(null, file.originalname);
+    }
+});
+
+var upload = multer({
+    storage: storage
+});
+var cpUpload = upload.any();
+app.use(cpUpload);
+
 
 app.use('/', index);
 
