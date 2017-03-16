@@ -4,6 +4,7 @@ var markdown = require('markdown').markdown;
 function Post(name, title, post) {
     this.name = name;
     this.title = title;
+    this.tags = tags;
     this.post = post;
 }
 
@@ -27,6 +28,7 @@ Post.prototype.save = function(callback) {
         name: this.name,
         time: time,
         title: this.title,
+        tags: this.tags,
         post: this.post,
         comments: []
     };
@@ -52,7 +54,9 @@ Post.prototype.save = function(callback) {
     });
 };
 
-Post.getAll = function(name, callback) {
+
+// 将Post.getAll 改为Post.getTen 每次获取十篇文章
+Post.getTen = function(name, page, callback) {
     mongodb.open(function(err, db) {
         if (err) {
             return callback(err);
@@ -69,15 +73,24 @@ Post.getAll = function(name, callback) {
                 query.name = name;
             }
 
-            collection.find(query).sort({ time: -1 }).toArray(function(err, docs) {
-                mongodb.close();
-                if (err) {
-                    return callback(err);
-                }
-                docs.forEach(function(doc) {
-                    doc.post = markdown.toHTML(doc.post);
+            /////////////////////////////////////////////////////////////////////////////
+            // collection.find(query).sort({ time: -1 }).toArray(function(err, docs) { //
+            /////////////////////////////////////////////////////////////////////////////
+
+            collection.count(query, function(err, total) {
+                collection.find(query, {
+                    skip: (page - 1) * 10,
+                    limit: 10
+                }).sort({ time: -1 }).toArray(function(err, docs) {
+                    mongodb.close();
+                    if (err) {
+                        return callback(err);
+                    }
+                    docs.forEach(function(doc) {
+                        doc.post = markdown.toHTML(doc.post);
+                    });
+                    callback(null, docs, total);
                 });
-                callback(null, docs);
             });
         });
     });
@@ -105,10 +118,12 @@ Post.getOne = function(name, day, title, callback) {
                 }
                 if (doc) {
                     doc.post = markdown.toHTML(doc.post);
-                    console.log('doc.comments is ' + doc.comments);
-                    doc.comments.forEach(function(comment) {
-                        comment.content = markdown.toHTML(comment.content);
-                    });
+                    if (!doc.comments) {
+                        doc.comments = [];
+                        doc.comments.forEach(function(comment) {
+                            comment.content = markdown.toHTML(comment.content);
+                        });
+                    }
                 }
                 callback(null, doc);
             });
@@ -188,6 +203,79 @@ Post.remove = function(name, day, title, callback) {
                     return callback(err);
                 }
                 callback(null);
+            });
+        });
+    });
+};
+
+Post.getArchive = function(callback) {
+    mongodb.open(function(err, db) {
+        if (err) {
+            return callback(err);
+        }
+        db.collection('posts', function(err, collection) {
+            if (err) {
+                mongodb.close();
+                return callback(err);
+            }
+            collection.find({}, {
+                "name": 1,
+                "time": 1,
+                "title": 1,
+            }).sort({ time: -1 }).toArray(function(err, docs) {
+                mongodb.close();
+                if (err) {
+                    return callback(err);
+                }
+                callback(null, docs);
+            });
+        });
+    });
+};
+
+Post.getTags = function(callback) {
+    mongodb.open(function(err, db) {
+        if (err) {
+            return callback(err);
+        }
+        db.collection('posts', function(err, collection) {
+            if (err) {
+                mongodb.close();
+                return callback(err);
+            }
+            collection.distinct('tags', function(err, docs) {
+                mongodb.close();
+                if (err) {
+                    return callback(err);
+                }
+                callback(null, docs);
+            });
+        });
+    });
+};
+
+Post.getTag = function(tag, callback) {
+    mongodb.open(function(err, db) {
+        if (err) {
+            return callback(err);
+        }
+        db.collection('posts', function(err, collection) {
+            if (err) {
+                mongodb.close();
+                return callback(err);
+            }
+            collection.find({
+                "tags": tag
+            }, {
+                "name": 1,
+                "time": 1,
+                "title": 1
+            }).sort({ time: -1 }).toArray(function(err, docs) {
+                mongodb.close();
+                if (err) {
+                    return callback(err);
+                }
+                callback(null, docs);
             });
         });
     });
