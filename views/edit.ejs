@@ -3,9 +3,9 @@
 	标题：<br />
 	<input type="text" name="title" value="<%= post.title %>" placeholder="" disabled="disabled" /><br />
 	标签：<br />
-	<input type="text" name="tag1" value="<%= post.tag[0]%>" disabled />
-	<input type="text" name="tag2" value="<%= post.tag[1]%>" disabled />
-	<input type="text" name="tag3" value="<%= post.tag[2]%>" disabled /><br />
+	<input type="text" name="tag1" value="<%= post.tags[0]%>" disabled />
+	<input type="text" name="tag2" value="<%= post.tags[1]%>" disabled />
+	<input type="text" name="tag3" value="<%= post.tags[2]%>" disabled /><br />
 	正文：<br />
 	<textarea name="post" rows="20" cols="100"><%= post.post %></textarea>
 	<input type="submit" name="" value="保存修改" />

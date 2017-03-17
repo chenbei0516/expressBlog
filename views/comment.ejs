@@ -1,9 +1,11 @@
 <br />
 <% post.comments.forEach(function(comment,index){ %>
-	<p><a href="<%= comment.website %>"><%= comment.name %></a>
-	<span class="info">回复于<%= comment.time %></span>
-	</p>
-	<p><%- comment.content %></p>	
+	<div style="padding-left: 4rem;">
+		<p><img class="l_head" src="<%= comment.head %>" alt="" /><a href="<%= comment.website %>"><%= comment.name %></a>
+		<span class="info">回复于<%= comment.time %></span>
+		</p>
+		<p><%- comment.content %></p>	
+	</div>
 <% }) %>
 
 <form method="post" accept-charset="utf-8">

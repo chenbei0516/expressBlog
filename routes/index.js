@@ -142,7 +142,7 @@ router.post('/post', checkLogin);
 router.post('/post', function(req, res) {
     var currentUser = req.session.user,
         tags = [req.body.tag1, req.body.tag2, req.body.tag3],
-        post = new Post(currentUser.name, req.body.title, req.body.post);
+        post = new Post(currentUser.name, currentUser.head, req.body.title, tags, req.body.post);
     post.save(function(err) {
         if (err) {
             req.flash('errer', err);
@@ -193,6 +193,32 @@ router.post('/upload', checkLogin);
 router.post('/upload', function(req, res) {
     req.flash('success', '文件上传成功！');
     res.redirect('/upload');
+});
+
+router.get('/search', function(req, res) {
+    Post.search(req.query.keyword, function(err, posts) {
+        if (err) {
+            req.flash('error', err);
+            res.redirect('/');
+        }
+
+        res.render('search', {
+            title: "SEARCH:" + req.query.keyword,
+            posts: posts,
+            user: req.session.user,
+            success: req.flash('success').toString(),
+            error: req.flash('error').toString()
+        });
+    });
+});
+
+router.get('/links', function(req, res) {
+    res.render('links', {
+        title: '友情链接',
+        user: req.session.user,
+        success: req.flash('success').toString(),
+        error: req.flash('error').toString()
+    });
 });
 
 router.get('/u/:name', function(req, res) {
@@ -289,8 +315,12 @@ router.get('/u/:name/:day/:title', function(req, res) {
 router.post('/u/:name/:day/:title', function(req, res) {
     var date = new Date(),
         time = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + (date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes());
+    var md5 = crypto.createHash('md5'),
+        email_MD5 = md5.update(req.body.email.toLowerCase()).digest('hex'),
+        head = "http://www.gravatar.com/avatar/" + email_MD5 + "?s=48";
     var comment = {
         name: req.body.name,
+        head: head,
         email: req.body.email,
         website: req.body.website,
         time: time,
@@ -352,6 +382,30 @@ router.get('/remove/:name/:day/:title', function(req, res) {
     });
 });
 
+router.get('/reprint/:name/:day/:title',checkLogin);
+router.get('/reprint/:name/:day/:title',function(req,res){
+    Post.edit(req.params.name,req.params.day,req.params.title,function(err,post){
+        if(err){
+            req.flash('error',err);
+            return res.redirect(back);
+        }
+        var currentUser = req.session.user,
+            reprint_from = {name:post.name,day:post.time.day,title:post.title},
+            reprint_to = {name:currentUser.name,head:currentUser.head};
+
+            Post.reprint(reprint_from,reprint_to,function(err,post){
+                if(err){
+                    req.flash('error',err);
+                    return res.redirect('back');
+                }
+                req.flash('success','转载成功！');
+                var url = encodeURI('/u/'+post.name+'/'+post.time.day+'/'+post.title);
+                res.redirect(url);
+            });
+    });
+});
+
+
 function checkLogin(req, res, next) {
     if (!req.session.user) {
         req.flash('error', '未登录！');
@@ -368,4 +422,7 @@ function checkNotLogin(req, res, next) {
     next();
 }
 
+router.use(function(req, res) {
+    res.render('404');
+});
 module.exports = router;

@@ -13,9 +13,12 @@
 </header><!-- /header -->
 <nav>
 	<ul>
+		<li><form action="/search" method="get" accept-charset="utf-8"><input class="search" type="text" name="keyword" value="" placeholder="SEARCH" />
+		</form></li>
 		<li><a href="/" title="主页">home</a></li>
 		<li><a href="/archive" title="存档">archive</a></li>
 		<li><a href="/tags" title="标签">tags</a></li>
+		<li><a href="/links" title="友情链接">links</a></li>
 		<% if (user) { %>
 		<li><a href="/upload" title="上传">upload</a></li>
 		<li><a href="/post" title="发表">post</a></li>
@@ -25,7 +28,6 @@
 		<li><a href="/reg" title="注册">register</a></li>
 		<% } %>
 	</ul>
-
 </nav>
 
 <article>
