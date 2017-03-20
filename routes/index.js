@@ -296,14 +296,14 @@ router.get('/tags/:tag', function(req, res) {
     });
 });
 
-router.get('/u/:name/:day/:title', function(req, res) {
-    Post.getOne(req.params.name, req.params.day, req.params.title, function(err, post) {
+router.get('/p/:_id', function(req, res) {
+    Post.getOne(req.params._id, function(err, post) {
         if (err) {
             req.flash('error', err);
             return res.redirect('/');
         }
         res.render('article', {
-            title: req.params.title,
+            title: post.title,
             post: post,
             user: req.session.user,
             success: req.flash('success').toString(),
@@ -382,26 +382,26 @@ router.get('/remove/:name/:day/:title', function(req, res) {
     });
 });
 
-router.get('/reprint/:name/:day/:title',checkLogin);
-router.get('/reprint/:name/:day/:title',function(req,res){
-    Post.edit(req.params.name,req.params.day,req.params.title,function(err,post){
-        if(err){
-            req.flash('error',err);
+router.get('/reprint/:name/:day/:title', checkLogin);
+router.get('/reprint/:name/:day/:title', function(req, res) {
+    Post.edit(req.params.name, req.params.day, req.params.title, function(err, post) {
+        if (err) {
+            req.flash('error', err);
             return res.redirect(back);
         }
         var currentUser = req.session.user,
-            reprint_from = {name:post.name,day:post.time.day,title:post.title},
-            reprint_to = {name:currentUser.name,head:currentUser.head};
+            reprint_from = { name: post.name, day: post.time.day, title: post.title },
+            reprint_to = { name: currentUser.name, head: currentUser.head };
 
-            Post.reprint(reprint_from,reprint_to,function(err,post){
-                if(err){
-                    req.flash('error',err);
-                    return res.redirect('back');
-                }
-                req.flash('success','转载成功！');
-                var url = encodeURI('/u/'+post.name+'/'+post.time.day+'/'+post.title);
-                res.redirect(url);
-            });
+        Post.reprint(reprint_from, reprint_to, function(err, post) {
+            if (err) {
+                req.flash('error', err);
+                return res.redirect('back');
+            }
+            req.flash('success', '转载成功！');
+            var url = encodeURI('/u/' + post.name + '/' + post.time.day + '/' + post.title);
+            res.redirect(url);
+        });
     });
 });
 

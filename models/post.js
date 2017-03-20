@@ -1,5 +1,23 @@
-var mongodb = require('./db');
 var markdown = require('markdown').markdown;
+var ObjectID = require('mongodb').ObjectID;
+var Db = require('./db');
+var poolModule = require('generic-pool');
+var pool = poolModule.Pool({
+    name: 'mongoPool',
+    create: function(callback) {
+        var mongodb = Db();
+        mongodb.open(function(err, db) {
+            callback(err, db);
+        });
+    },
+    destroy: function(mongodb) {
+        mongodb.close();
+    },
+    max: 100,
+    min: 5,
+    idleTimeoutMillis: 30000,
+    log: true
+});
 
 function Post(name, head, title, tags, post) {
     this.name = name;
@@ -37,18 +55,18 @@ Post.prototype.save = function(callback) {
         pv: 0
     };
 
-    mongodb.open(function(err, db) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
 
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
             collection.insert(post, { safe: true }, function(err) {
-                mongodb.close();
+                pool.release(mongodb);
                 if (err) {
                     return callback(err);
                 }
@@ -61,14 +79,14 @@ Post.prototype.save = function(callback) {
 
 // 将Post.getAll 改为Post.getTen 每次获取十篇文章
 Post.getTen = function(name, page, callback) {
-    mongodb.open(function(err, db) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
 
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
 
@@ -86,7 +104,7 @@ Post.getTen = function(name, page, callback) {
                     skip: (page - 1) * 10,
                     limit: 10
                 }).sort({ time: -1 }).toArray(function(err, docs) {
-                    mongodb.close();
+                    pool.release(mongodb);
                     if (err) {
                         return callback(err);
                     }
@@ -102,34 +120,30 @@ Post.getTen = function(name, page, callback) {
 };
 
 
-Post.getOne = function(name, day, title, callback) {
-    mongodb.open(function(err, db) {
+Post.getOne = function(_id, callback) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
             collection.findOne({
-                "name": name,
-                "time.day": day,
-                "title": title
+                "_id": new ObjectID(_id)
             }, function(err, doc) {
                 if (err) {
-                    mongodb.close();
+                    pool.release(mongodb);
                     return callback(err);
                 }
                 if (doc) {
                     collection.update({
-                        "name": name,
-                        "time.day": day,
-                        "title": title
+                        "_id": new ObjectID(_id)
                     }, {
                         $inc: { "pv": 1 }
                     }, function(err) {
-                        mongodb.close();
+                        pool.release(mongodb);
                         if (err) {
                             return callback(err);
                         }
@@ -150,13 +164,13 @@ Post.getOne = function(name, day, title, callback) {
 };
 
 Post.edit = function(name, day, title, callback) {
-    mongodb.open(function(err, db) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
             collection.findOne({
@@ -164,7 +178,7 @@ Post.edit = function(name, day, title, callback) {
                 "time.day": day,
                 "title": title
             }, function(err, doc) {
-                mongodb.close();
+                pool.release(mongodb);
                 if (err) {
                     return callback(err);
                 }
@@ -176,13 +190,13 @@ Post.edit = function(name, day, title, callback) {
 };
 
 Post.update = function(name, day, title, post, callback) {
-    mongodb.open(function(err, db) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
 
@@ -191,7 +205,7 @@ Post.update = function(name, day, title, post, callback) {
                 "time.day": day,
                 "title": title
             }, { $set: { post: post } }, function(err) {
-                mongodb.close();
+                pool.release(mongodb);
                 if (err) {
                     return callback(err);
                 }
@@ -202,13 +216,13 @@ Post.update = function(name, day, title, post, callback) {
 };
 
 Post.remove = function(name, day, title, callback) {
-    mongodb.open(function(err, db) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
 
@@ -218,7 +232,7 @@ Post.remove = function(name, day, title, callback) {
                 "title": title
             }, function(err, doc) {
                 if (err) {
-                    mongodb.close();
+                    pool.release(mongodb);
                     return callback(err);
                 }
                 var reprint_from = "";
@@ -240,7 +254,7 @@ Post.remove = function(name, day, title, callback) {
                         }
                     }, function(err) {
                         if (err) {
-                            mongodb.close();
+                            pool.release(mongodb);
                             return callback(err);
                         }
                     });
@@ -250,7 +264,7 @@ Post.remove = function(name, day, title, callback) {
                     "time.day": day,
                     "title": title
                 }, { w: 1 }, function(err) {
-                    mongodb.close();
+                    pool.release(mongodb);
                     if (err) {
                         return callback(err);
                     }
@@ -262,13 +276,13 @@ Post.remove = function(name, day, title, callback) {
 };
 
 Post.getArchive = function(callback) {
-    mongodb.open(function(err, db) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
             collection.find({}, {
@@ -276,7 +290,7 @@ Post.getArchive = function(callback) {
                 "time": 1,
                 "title": 1,
             }).sort({ time: -1 }).toArray(function(err, docs) {
-                mongodb.close();
+                pool.release(mongodb);
                 if (err) {
                     return callback(err);
                 }
@@ -287,17 +301,17 @@ Post.getArchive = function(callback) {
 };
 
 Post.getTags = function(callback) {
-    mongodb.open(function(err, db) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
             collection.distinct('tags', function(err, docs) {
-                mongodb.close();
+                pool.release(mongodb);
                 if (err) {
                     return callback(err);
                 }
@@ -308,13 +322,13 @@ Post.getTags = function(callback) {
 };
 
 Post.getTag = function(tag, callback) {
-    mongodb.open(function(err, db) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
             collection.find({
@@ -324,7 +338,7 @@ Post.getTag = function(tag, callback) {
                 "time": 1,
                 "title": 1
             }).sort({ time: -1 }).toArray(function(err, docs) {
-                mongodb.close();
+                pool.release(mongodb);
                 if (err) {
                     return callback(err);
                 }
@@ -336,13 +350,13 @@ Post.getTag = function(tag, callback) {
 
 
 Post.search = function(keyword, callback) {
-    mongodb.open(function(err, db) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
             var pattern = new RegExp(keyword, 'i');
@@ -355,7 +369,7 @@ Post.search = function(keyword, callback) {
             }).sort({
                 time: -1
             }).toArray(function(err, docs) {
-                mongodb.close();
+                pool.release(mongodb);
                 if (err) {
                     return callback(err);
                 }
@@ -367,13 +381,13 @@ Post.search = function(keyword, callback) {
 
 
 Post.reprint = function(reprint_from, reprint_to, callback) {
-    mongodb.open(function(err, db) {
+    pool.acquire(function(err,mongodb) {
         if (err) {
             return callback(err);
         }
         db.collection('posts', function(err, collection) {
             if (err) {
-                mongodb.close();
+                pool.release(mongodb);
                 return callback(err);
             }
             collection.findOne({
@@ -382,7 +396,7 @@ Post.reprint = function(reprint_from, reprint_to, callback) {
                 "title": reprint_from.title
             }, function(err, doc) {
                 if (err) {
-                    mongodb.close();
+                    pool.release(mongodb);
                     return callback(err);
                 }
 
@@ -422,7 +436,7 @@ Post.reprint = function(reprint_from, reprint_to, callback) {
                     }
                 }, function(err) {
                     if (err) {
-                        mongodb.close();
+                        pool.release(mongodb);
                         return callback(err);
                     }
                 });
@@ -430,7 +444,7 @@ Post.reprint = function(reprint_from, reprint_to, callback) {
                 collection.insert(doc, {
                     safe: true
                 }, function(err, post) {
-                    mongodb.close();
+                    pool.release(mongodb);
                     if (err) {
                         return callback(err);
                     }
