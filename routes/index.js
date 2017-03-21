@@ -252,13 +252,21 @@ router.get('/archive', function(req, res) {
     Post.getArchive(function(err, posts) {
         if (err) {
             req.flash('error', err);
+            return res.redirect('/');
         }
         res.render('archive', {
             title: '存档',
             posts: posts,
             user: req.session.user,
             success: req.flash('success').toString(),
-            error: req.flash('error').toString()
+            error: req.flash('error').toString(),
+            helpers: {
+                showYear: function(index, options) {
+                    if ((index === 0) || (posts[index].time.year != posts[index - 1].time.year)) {
+                        return options.fn(this);
+                    }
+                }
+            }
         });
     });
 });
@@ -423,6 +431,8 @@ function checkNotLogin(req, res, next) {
 }
 
 router.use(function(req, res) {
-    res.render('404');
+    res.render('404', {
+        layout: false
+    });
 });
 module.exports = router;

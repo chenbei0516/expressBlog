@@ -7,8 +7,8 @@ var Db = mongodb.Db,
 
 // module.exports = new Db(settings.db, new Server(settings.host, settings.port), { safe: true });
 
-module.exports = function(){
-	return new Db(settings.db,new Server(settings.host,settings.port),{safe:true,poolSize:1});
+module.exports = function() {
+    return new Db(settings.db, new Server(settings.host, settings.port), { safe: true, poolSize: 1 });
 };
 
 // var settings = require('../settings'),

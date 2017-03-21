@@ -1,5 +1,5 @@
 var crypto = require('crypto');
-var mongodb = require('./db');
+var mongodb = require('./db')();
 var async = require('async');
 
 function User(user) {

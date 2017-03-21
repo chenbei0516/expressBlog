@@ -2,6 +2,35 @@ var markdown = require('markdown').markdown;
 var ObjectID = require('mongodb').ObjectID;
 var Db = require('./db');
 var poolModule = require('generic-pool');
+
+/*var factory = {
+    create: function() {
+        return new Promise(function(resolve, reject) {
+            var mongodb = Db();
+            mongodb.open(function(err, db) {
+                resolve(db);
+                reject(err);
+            });
+        });
+    },
+    destroy: function(mongodb) {
+        return new Promise(function(resolve, reject) {
+            mongodb.close();
+            resolve();
+            reject();
+        });
+    }
+};
+
+var opts = {
+    max: 100,
+    min: 5,
+    idleTimeoutMillis: 30000,
+    log: true
+};
+
+var pool = poolModule.createPool(factory, opts);*/
+
 var pool = poolModule.Pool({
     name: 'mongoPool',
     create: function(callback) {
@@ -16,7 +45,7 @@ var pool = poolModule.Pool({
     max: 100,
     min: 5,
     idleTimeoutMillis: 30000,
-    log: true
+    log: false
 });
 
 function Post(name, head, title, tags, post) {
@@ -55,12 +84,12 @@ Post.prototype.save = function(callback) {
         pv: 0
     };
 
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
 
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
@@ -79,12 +108,12 @@ Post.prototype.save = function(callback) {
 
 // 将Post.getAll 改为Post.getTen 每次获取十篇文章
 Post.getTen = function(name, page, callback) {
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
 
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
@@ -121,11 +150,11 @@ Post.getTen = function(name, page, callback) {
 
 
 Post.getOne = function(_id, callback) {
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
@@ -164,11 +193,11 @@ Post.getOne = function(_id, callback) {
 };
 
 Post.edit = function(name, day, title, callback) {
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
@@ -190,11 +219,11 @@ Post.edit = function(name, day, title, callback) {
 };
 
 Post.update = function(name, day, title, post, callback) {
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
@@ -216,11 +245,11 @@ Post.update = function(name, day, title, post, callback) {
 };
 
 Post.remove = function(name, day, title, callback) {
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
@@ -276,11 +305,11 @@ Post.remove = function(name, day, title, callback) {
 };
 
 Post.getArchive = function(callback) {
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
@@ -301,11 +330,11 @@ Post.getArchive = function(callback) {
 };
 
 Post.getTags = function(callback) {
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
@@ -322,11 +351,11 @@ Post.getTags = function(callback) {
 };
 
 Post.getTag = function(tag, callback) {
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
@@ -350,11 +379,11 @@ Post.getTag = function(tag, callback) {
 
 
 Post.search = function(keyword, callback) {
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
@@ -381,11 +410,11 @@ Post.search = function(keyword, callback) {
 
 
 Post.reprint = function(reprint_from, reprint_to, callback) {
-    pool.acquire(function(err,mongodb) {
+    pool.acquire(function(err, mongodb) {
         if (err) {
             return callback(err);
         }
-        db.collection('posts', function(err, collection) {
+        mongodb.collection('posts', function(err, collection) {
             if (err) {
                 pool.release(mongodb);
                 return callback(err);
