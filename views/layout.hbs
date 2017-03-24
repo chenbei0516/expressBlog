@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Blog</title>
+	<link rel="stylesheet" type="text/css" href="/stylesheets/style.css">
+	<script src="/kindeditor/kindeditor-min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/kindeditor/lang/zh_CN.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript" charset="utf-8">
+		var editor;
+		KindEditor.ready(function(K){
+			editor = K.create('textarea',{
+				allowImageUpload:false,
+				items:[
+					'fontname','fontsize','|','forecolor','hilitecolor','bold','italic','underline','removeformat','|','justifyleft','justifycenter','justifyright','insertorderedlist','insertunorderedlist','|','emoticons','image','link'
+				]
+			});
+		});
+	</script>
+</head>
+<body>
+	<header>
+		<h1>{{title}}</h1>
+	</header><!-- /header -->
+
+	<nav>
+		<ul>
+			<li><a href="/" title="主页">home</a></li>
+			<li><a href="/archive" title="存档">archive</a></li>
+			<li><a href="/tags" title="标签">tags</a></li>
+			<li><a href="/links" title="友情链接">links</a></li>
+			{{#if user}}
+			<li><a href="/upload" title="上传">upload</a></li>
+			<li><a href="/post" title="发表">post</a></li>
+			<li><a href="/logout" title="登出">logout</a></li>
+			{{else}}
+			<li><a href="/login" title="登录">login</a></li>
+			<li><a href="/reg" title="注册">register</a></li>
+			{{/if}}
+			<li><form action="/search" method="GET" accept-charset="utf-8">
+			<input class="search" type="search" name="keyword" value="" placeholder="SEARCH" />
+			</form></li>
+		</ul>
+	</nav>
+
+	<article>
+		{{#if success}}
+			<div> {{success}} </div>
+		{{/if}}
+		{{#if error}}
+			<div> {{error}} </div>
+		{{/if}}
+
+		{{{body}}}
+		
+	</article>
+</body>
+</html>

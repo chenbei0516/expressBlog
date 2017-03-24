@@ -1,4 +1,4 @@
-var markdown = require('markdown').markdown;
+// var markdown = require('markdown').markdown;
 var ObjectID = require('mongodb').ObjectID;
 var Db = require('./db');
 var poolModule = require('generic-pool');
@@ -138,9 +138,9 @@ Post.getTen = function(name, page, callback) {
                         return callback(err);
                     }
 
-                    docs.forEach(function(doc) {
-                        doc.post = markdown.toHTML(doc.post);
-                    });
+                    // docs.forEach(function(doc) {
+                    //     doc.post = markdown.toHTML(doc.post);
+                    // });
                     callback(null, docs, total);
                 });
             });
@@ -178,13 +178,13 @@ Post.getOne = function(_id, callback) {
                         }
                     });
 
-                    doc.post = markdown.toHTML(doc.post);
-                    if (!doc.comments) {
-                        doc.comments = [];
-                        doc.comments.forEach(function(comment) {
-                            comment.content = markdown.toHTML(comment.content);
-                        });
-                    }
+                    // doc.post = markdown.toHTML(doc.post);
+                    // if (!doc.comments) {
+                    //     doc.comments = [];
+                    //     doc.comments.forEach(function(comment) {
+                    //         comment.content = markdown.toHTML(comment.content);
+                    //     });
+                    // }
                     callback(null, doc);
                 }
             });

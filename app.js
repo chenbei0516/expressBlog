@@ -5,6 +5,8 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var exphbs = require('express-handlebars');
+var passport = require('passport');
+var GitHubStrategy = require('passport-github').Strategy;
 
 var session = require('express-session');
 var flash = require('connect-flash');
@@ -23,26 +25,34 @@ var app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 // app.set('view engine', 'ejs');
-app.engine('hbs',exphbs({
-    layoutsDir:'views',
-    defaultLayout:'layout',
-    extname:'.hbs'
+app.engine('hbs', exphbs({
+    layoutsDir: 'views',
+    defaultLayout: 'layout',
+    extname: '.hbs'
 }));
-app.set('view engine','hbs');
+app.set('view engine', 'hbs');
 
 
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev',{ stream: accessLog }));
+app.use(logger('dev', { stream: accessLog }));
 // app.use(logger({ stream: accessLog }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(passport.initialize());
 // app.use('/users', users);
 
+passport.use(new GitHubStrategy({
+    clientID: "0477cb75252813e4e132",
+    clientSecret: "a8a217a1115137cf6cf38898a78677af86bb263b",
+    callbackURL: "/login/github/callback"
+}, function(accessToken, refreshToken, profile, done) {
+    done(null, profile);
+}));
 
 app.use(function(err, req, res, next) {
     var meta = '[' + new Date() + ']' + req.url + '\n';

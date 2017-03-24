@@ -4,6 +4,8 @@ var crypto = require('crypto');
 var User = require('../models/user.js');
 var Post = require('../models/post.js');
 var Comment = require('../models/comment.js');
+
+var passport = require('passport');
 // var multer = require('multer');
 /* GET home page. */
 // router.get('/', function(req, res, next) {
@@ -105,6 +107,16 @@ router.get('/login', function(req, res) {
         success: req.flash('success').toString(),
         error: req.flash('error').toString()
     });
+});
+
+router.get('/login/github',passport.authenticate('github',{session:false}));
+router.get('/login/github/callback',passport.authenticate('github',{
+    session:false,
+    failureRedirect:'/login',
+    successFlash:'登录成功'
+}),function(req,res){
+    req.session.user = {name:req.user.username,head:"http://gravatar.com/avatar/"+req.user._json.gravatar_id+"?s=48"};
+    res.redirect('/');
 });
 
 router.post('/login', checkNotLogin);
